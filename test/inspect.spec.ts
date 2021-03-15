@@ -1,7 +1,7 @@
 /*
  * @Date: 2020-11-02 10:09:36
  * @LastEditors: JOU(wx: huzhen555)
- * @LastEditTime: 2021-03-13 13:48:24
+ * @LastEditTime: 2021-03-15 17:01:07
  */
 import expect from 'expect.js';
 import Inspector from '../src/index';

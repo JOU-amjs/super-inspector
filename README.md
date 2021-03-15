@@ -43,6 +43,7 @@ import SuperInspector from 'super-inspector';
 ```
 
 ### *创建对象*
+在原config对象上修改
 ```javascript
 let sp = new SuperInspector(config => {
   // throwError为true时，验证失败将会抛出错误
@@ -64,6 +65,17 @@ let sp = new SuperInspector(config => {
   config.transformError = errors => {
     return errors.map(({ key, error }) => `[${key}]${error}`).join('\n');
   }
+});
+```
+返回新的config对象
+```javascript
+let sp = new SuperInspector(config => {
+  return {
+    errors: {
+      falsy: '参数必填',
+    },
+    throwError: true,
+  };
 });
 ```
 
@@ -91,7 +103,7 @@ let result = await sp.batchInspect({
 // 以登录举例，当loginType的值为username时，username、password才会进行验证
 // 当loginType的值为mobile时，mobileNumber和captcha才会进行验证
 // 具体验证规则可查看api介绍
-let result = sp.batchInspect({
+let result = await sp.batchInspect({
   loginType: 'username',
   username: 'John123',
   password: 'qwertyu12',
@@ -169,13 +181,13 @@ let result = await sp.inspect(
 ```javascript
 import { $Array } from 'super-inspector';
 // 验证数组每项的值是否为图片(数组简单项)
-let result1 = sp.inspect([
+let result1 = await sp.inspect([
   'https://img1.png',
   'https://img2.jpg'
 ], $Array(/(png|jpg|jpeg|webp)$/));
 
 // 验证批量添加的人员信息(数组复杂项)
-let result2 = sp.inspect([
+let result2 = await sp.inspect([
   { avatar: '', name: 'Ann', age: 24 },
   { avatar: 'https://avatar1.png', name: 'Tom', age: 26 },
 ], $Array({
@@ -188,13 +200,13 @@ let result2 = sp.inspect([
 ```javascript
 import { $Object } from 'super-inspector';
 // 验证每个人的头像是否为图片(对象简单值)
-let result1 = sp.inspect({
+let result1 = await sp.inspect({
   avatar_Ann: 'https://img1.png',
   avatar_Tom: 'https://img2.jpg'
 }, $Object(/(png|jpg|jpeg|bmp|webp)$/));
 
 // 验证每个人的位置是否正确(对象复杂值)
-let reuslt2 = sp.inspect({
+let reuslt2 = await sp.inspect({
   coordinate_Ann: { lat: 24.443729, lng: 118.128319 },
   coordinate_Ann: { lat: 32.827119, lng: 120.293013 },
 }, $Object({
@@ -207,13 +219,13 @@ let reuslt2 = sp.inspect({
 ```javascript
 import { $Union } from 'super-inspector';
 // 满足$Union中其中一个验证规则可通过
-let result1 = sp.inspect(
+let result1 = await sp.inspect(
   'https://img1.png',
   $Union(/png$/, /jpg$/, /jpeg$/, /webp$/)
 );
 
 // 与$Array嵌套使用
-let res = sp.inspect([
+let res = await sp.inspect([
   'https://img1.png',
   'https://img2.jpg'
 ], $Array(
@@ -225,7 +237,7 @@ let res = sp.inspect([
 ```javascript
 import { $Intersect } from 'super-inspector';
 // 满足$Intersect中所有验证规则才可通过
-let res = sp.inspect('javascript', $Intersect(String, function(value) {
+let res = await sp.inspect('javascript', $Intersect(String, function(value) {
   if (value.length < 8) {
     this.throw('必须填写至少8个字符');
   }
@@ -285,7 +297,7 @@ let result = await sp.inspect(
 ```javascript
 // result的值为{ loginType: true, username: true, password: true, mobileNumber: false, captcha: false }
 // 我们可根据此数据隐藏值为false的表单项
-let result = sp.affectedItems({
+let result = await sp.affectedItems({
   loginType: 'username',
   username: 'John123',
   password: 'qwertyu12',

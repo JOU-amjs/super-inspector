@@ -1,7 +1,7 @@
 /*
  * @Date: 2020-10-31 13:09:27
  * @LastEditors: JOU(wx: huzhen555)
- * @LastEditTime: 2021-03-14 19:59:03
+ * @LastEditTime: 2021-03-15 17:00:55
  */
 export type TBaseData = typeof String|typeof Number|typeof Function|typeof Boolean|typeof Object|typeof Symbol;
 export type TErrorFunc = (value: any, rule: TFinalRule, key?: string, extra?: any, depValue?: any) => string;
@@ -10,14 +10,24 @@ export interface IErrorCollection {
   falsy: TErrorConverter,
   type: TErrorConverter,
   regexp: TErrorConverter,
+  notArray: TErrorConverter,
+  arrayError: TErrorConverter,
+  notObject: TErrorConverter,
+  objectError: TErrorConverter,
   [key: string]: TErrorConverter,
 };
+type TErrorThrowFunc = (extra?: any) => never;
 export interface IErrorThrowFunc {
   (message: string): never,
-  falsy: (extra?: any) => never,
-  type: (extra?: any) => never,
-  regexp: (extra?: any) => never,
-  [key: string]: (extra?: any) => never,
+  
+  falsy: TErrorThrowFunc,
+  type: TErrorThrowFunc,
+  regexp: TErrorThrowFunc,
+  notArray: TErrorThrowFunc,
+  arrayError: TErrorThrowFunc,
+  notObject: TErrorThrowFunc,
+  objectError: TErrorThrowFunc,
+  [key: string]: TErrorThrowFunc,
 }
 export type TRawError = {key: string, error: string};
 export interface IConfig<U> {

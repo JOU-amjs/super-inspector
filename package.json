@@ -1,6 +1,6 @@
 {
   "name": "super-inspector",
-  "version": "2.1.5",
+  "version": "2.1.7",
   "description": "A validate library for dynamic & complex forms.And for your beautiful code",
   "main": "dist/super-inspector.js",
   "types": "typings/index.d.ts",
