@@ -1,7 +1,7 @@
 /*
  * @Date: 2019-11-29 21:44:49
  * @LastEditors: JOU(wx: huzhen555)
- * @LastEditTime: 2021-03-15 10:46:00
+ * @LastEditTime: 2021-03-15 10:59:01
  */
 
 import { IConfig, IDetailedRule, IInspectRes, TFinalRule, TRawError } from '../typings';
