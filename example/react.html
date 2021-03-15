@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+  <script src="https://unpkg.com/super-inspector@2/dist/super-inspector.umd.js"></script>
+  <title>Super Inspector React Example</title>
+</head>
+<body>
+  <div id="app"></div>
+</body>
+
+<script type="text/babel">
+const inspector = new SuperInspector.default(config => {
+  config.throwError = false;
+  config.falsyValues.push('');
+  config.transformError = errors => {
+    let formErrors = {};
+    errors.forEach(({ key, error }) => formErrors[key] = error);
+    return formErrors;
+  };
+});
+const rules = {
+  type: { label: '类型', required: true },
+  name: { label: '姓名', validator: /^.{2,5}$/, deps: { key: 'type', match: /^0$/ } },
+  sex: { label: '性别', validator: /^0|1$/, deps: { key: 'type', match: /^0$/ } },
+  phone: { label: '手机号', validator: /^1[0-9]{10}$/, deps: { key: 'type', match: /^0$/ } },
+
+  company: { label: '公司名', validator: String, deps: { key: 'type', match: /^1$/ } },
+  address: { label: '地址', validator: String, deps: { key: 'type', match: /^1$/ } },
+  license: { label: '营业执照', validator: /^[0-9]+$/, deps: { key: 'type', match: /^1$/ } },
+};
+const formItems = {
+  type: { type: 'select', options: [{label: '个人', value: 0}, {label: '公司', value: 1}] },
+  sex: { type: 'select', options: [{label: '男', value: 0}, {label: '女', value: 1}] },
+};
+const getLabel = key => (rules[key] || {}).label;
+
+function App (props) {
+  let [formData, setFormData] = React.useState({
+    type: 0,
+    name: '',
+    sex: 0,
+    phone: '',
+
+    company: '',
+    address: '',
+    license: '',
+  });
+  let [formMeta, setFormMeta] = React.useState({});
+  let [formErrors, setFormErrors] = React.useState({});
+
+  const changeHandler = (key, value) => {
+    let newFormData = formData;
+    if (key) {
+      newFormData = Object.assign({}, formData, { [key]: value });
+      setFormData(newFormData);
+      inspector.inspect(newFormData[key], rules[key]).then(({ error }) => {
+        setFormErrors({
+          ...formErrors,
+          [key]: error ? Object.values(error)[0] : '',
+        });
+      });
+    }
+    inspector.affectedItems(newFormData, rules).then(formMeta => {
+      setFormMeta(formMeta);
+    });
+  }
+  const submit = () => {
+    inspector.batchInspect(formData, rules).then(({ code, error }) => {
+      if (code === 'fail') {
+        setFormErrors(error);
+      }
+      alert(`检验结果:${error ? JSON.stringify(error) : '通过'}`);
+    });
+  }
+  React.useEffect(() => changeHandler(), []);
+
+  // render dom
+  return <div>
+    {
+      Object.keys(formData).map(key => {
+        let item = formData[key];
+        return <div key={key}>
+          { formMeta[key] ? <div>
+            <label>{ getLabel(key) }:</label>
+            { formItems[key] && formItems[key].type === 'select' ? <select
+              value={formData[key]}
+              onChange={e => changeHandler(key, e.target.value)}>
+              { formItems[key].options.map(o => <option
+                key={o.value}
+                value={o.value}>{ o.label }</option>) }
+            </select> : <input
+              value={formData[key]}
+              onChange={e => changeHandler(key, e.target.value)}
+            /> }
+            <span>{ formErrors[key] }</span>
+          </div> : null }
+        </div>
+      })
+    }
+    <button onClick={submit}>提交</button>
+  </div>;
+}
+ReactDOM.render(<App name="react" />, document.querySelector('#app'));
+</script>
+</html>

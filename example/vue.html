@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/vue@2.6.12/dist/vue.js"></script>
+  <script src="https://unpkg.com/super-inspector@2/dist/super-inspector.umd.js"></script>
+  <title>Super Inspector Vue Example</title>
+</head>
+<body>
+  <div id="app">
+    <div v-for="(item, key) in formData" :key="key">
+      <div v-if="formMeta[key]">
+        <label>{{ getLabel(key) }}:</label>
+        <select
+          v-if="formItems[key] && formItems[key].type === 'select'"
+          v-model="formData[key]"
+          @change="validate(key)">
+          <option
+            v-for="o in formItems[key].options"
+            :key="o.value"
+            :value="o.value">{{ o.label }}</option>
+        </select>
+        <input
+          v-else
+          v-model="formData[key]"
+          @change="validate(key)"
+        />
+        <span>{{ formErrors[key] }}</span>
+      </div>
+    </div>
+    <button @click="submit">提交</button>
+  </div>
+</body>
+
+<script>
+const inspector = new SuperInspector.default(config => {
+  config.throwError = false;
+  config.falsyValues.push('');
+  config.transformError = errors => {
+    let formErrors = {};
+    errors.forEach(({ key, error }) => formErrors[key] = error);
+    return formErrors;
+  };
+});
+const rules = {
+  type: { label: '类型', required: true },
+  name: { label: '姓名', validator: /^.{2,5}$/, deps: { key: 'type', match: /^0$/ } },
+  sex: { label: '性别', validator: /^0|1$/, deps: { key: 'type', match: /^0$/ } },
+  phone: { label: '手机号', validator: /^1[0-9]{10}$/, deps: { key: 'type', match: /^0$/ } },
+
+  company: { label: '公司名', validator: String, deps: { key: 'type', match: /^1$/ } },
+  address: { label: '地址', validator: String, deps: { key: 'type', match: /^1$/ } },
+  license: { label: '营业执照', validator: /^[0-9]+$/, deps: { key: 'type', match: /^1$/ } },
+};
+new Vue({
+  data() {
+    return {
+      formItems: {
+        type: { type: 'select', options: [{label: '个人', value: 0}, {label: '公司', value: 1}] },
+        sex: { type: 'select', options: [{label: '男', value: 0}, {label: '女', value: 1}] },
+      },
+      formData: {
+        type: 0,
+        name: '',
+        sex: 0,
+        phone: '',
+        
+        company: '',
+        address: '',
+        license: '',
+      },
+      formMeta: {},
+      formErrors: {},
+    };
+  },
+  mounted() {
+    this.validate();
+  },
+  methods: {
+    getLabel: key => (rules[key] || {}).label,
+    validate(key) {
+      inspector.affectedItems(this.formData, rules).then(formMeta => {
+        console.log(formMeta);
+        this.formMeta = formMeta;
+      });
+      if (key) {
+        inspector.inspect(this.formData[key], rules[key]).then(({ error }) => {
+          this.formErrors = {
+            ...this.formErrors,
+            [key]: error ? Object.values(error)[0] : '',
+          };
+        });
+      }
+    },
+    submit() {
+      inspector.batchInspect(this.formData, rules).then(({ code, error }) => {
+        if (code === 'fail') {
+          this.formErrors = error;
+        }
+        alert(`检验结果:${error ? JSON.stringify(error) : '通过'}`);
+      });
+    }
+  }
+}).$mount('#app');
+</script>
+</html>
